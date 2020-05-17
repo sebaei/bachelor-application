@@ -35,7 +35,7 @@ public class EU
         tooltip.setComponent(jXMapKit.getMainMap());
         jXMapKit.getMainMap().add(tooltip);
 
-        jXMapKit.setZoom(12);
+        jXMapKit.setZoom(14);
         jXMapKit.setAddressLocation(eu);
 
         jXMapKit.getMainMap().addMouseMotionListener(new MouseMotionListener() {
@@ -43,12 +43,14 @@ public class EU
             public void mouseDragged(MouseEvent e) { 
                 
             }
-
+            
             @Override
             public void mouseMoved(MouseEvent e)
             {
+               
                 JXMapViewer map = jXMapKit.getMainMap();
-
+                
+            	
                 // convert to world bitmap
                 Point2D worldPos = map.getTileFactory().geoToPixel(eu, map.getZoom());
 
@@ -56,6 +58,7 @@ public class EU
                 int sx = (int) worldPos.getX() - rect.x;
                 int sy = (int) worldPos.getY() - rect.y;
                 Point screenPos = new Point(sx, sy);
+                
 
                 if (screenPos.distance(e.getPoint()) < 20)
                 {
@@ -68,7 +71,9 @@ public class EU
                 {
                     tooltip.setVisible(false);
                 }
+               
             }
+            
         });
 
         JFrame frame = new JFrame("Europe Map");
@@ -77,4 +82,5 @@ public class EU
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
     }
+
 }

@@ -11,7 +11,7 @@ public class OSMTileFactoryInfo extends TileFactoryInfo
     public OSMTileFactoryInfo()
     {
         this("OpenStreetMap", "http://tile.openstreetmap.org");
-    }
+    } //http://tile.openstreetmap.org  //http://www.openstreetmap.org/api/0.6/
     
     public OSMTileFactoryInfo(String name, String baseURL)
     {
