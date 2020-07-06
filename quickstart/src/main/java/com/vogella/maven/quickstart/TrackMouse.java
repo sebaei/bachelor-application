@@ -1,25 +1,27 @@
 package com.vogella.maven.quickstart;
 
-import com.vogella.maven.quickstart.OutputCSV;
-import java.awt.Color;
-import java.io.Writer;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.ArrayList;
-import java.util.List;
 import java.awt.Dimension;
-import java.awt.event.MouseMotionListener;
-import java.awt.geom.Point2D;
-import java.sql.Timestamp;
-import java.util.Calendar;
-import java.awt.event.MouseEvent;
 import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
+import java.awt.geom.Point2D;
+import java.io.FileWriter;
+import java.sql.Timestamp;
+import java.util.Calendar;
+import java.util.Date;
 
-import javax.swing.*;
+
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JToolTip;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 import org.jxmapviewer.JXMapKit;
 import org.jxmapviewer.JXMapViewer;
@@ -31,8 +33,14 @@ import org.jxmapviewer.viewer.TileFactoryInfo;
 
 public class TrackMouse extends JPanel implements MouseMotionListener {
     Tr blankArea;
-    JTextArea textArea;
+    static String Direction;
+    static JTextArea textArea;
+    static double startX;
+    static double startY;
+    static Timestamp starttime;
+    static boolean start;
     final static JXMapKit jXMapKit = new JXMapKit();
+    
     
     static final String NEWLINE = System.getProperty("line.separator");
      
@@ -63,10 +71,44 @@ public class TrackMouse extends JPanel implements MouseMotionListener {
             @Override
             public void mouseMoved(MouseEvent e)
             {
-               
+            	Calendar calendar = Calendar.getInstance();
+            	long timeMilSec = new Date().getTime();
+            	calendar.setTimeInMillis(timeMilSec);
+            	long seconds = timeMilSec/1000;
+            		if (!start) {
+            				start = !start;
+            				startX = e.getX();
+            				startY = e.getY();
+            		    	starttime = new java.sql.Timestamp(calendar.getTime().getTime());;
+            		}
+            		else {
+            			double endX = e.getX();
+            			double endY = e.getY();
+            			double diffX = Math.pow((endX-startX),2);
+            			double diffY = Math.pow((endY-startY),2);
+            			double distance = Math.pow(Math.pow((endX-startX),2)+Math.pow((endY-startY),2),0.5);
+            			if (distance>10) {
+            				Timestamp endtime = new java.sql.Timestamp(calendar.getTime().getTime());
+            				long actualtime = endtime.getTime() - starttime.getTime();
+            				double speed = distance/actualtime;
+            				System.out.println("SX " + startX + NEWLINE + "SY " + startY + NEWLINE + "EX " + endX + NEWLINE + "EY " + endY +
+            						NEWLINE + "Distance " + distance + NEWLINE + "Actualtime " + actualtime + NEWLINE + "Speed " + speed);
+            				//Call Python Script
+            				starttime = endtime;
+            				startX = endX;
+            				startY = endY;
+            				if (diffX > ) {
+            			}
+            		}
+            		
                 JXMapViewer map = jXMapKit.getMainMap();
                 
-            	
+                try {
+    				toCSV("Mouse moved to ", e);
+    			} catch (Exception e1) {
+    				e1.printStackTrace();
+    			}
+    			eventOutput("Mouse moved to ", e);
                 // convert to world bitmap
                 Point2D worldPos = map.getTileFactory().geoToPixel(eu, map.getZoom());
 
@@ -119,7 +161,6 @@ public class TrackMouse extends JPanel implements MouseMotionListener {
         JComponent newContentPane = new TrackMouse();
         newContentPane.setOpaque(false); 
         frame.add(newContentPane);
-        //frame.getContentPane().add(jXMapKit);
         frame.pack();
         frame.setVisible(true);
     }
@@ -146,7 +187,7 @@ public class TrackMouse extends JPanel implements MouseMotionListener {
     }
     
      
-    void eventOutput(String eventDescription, MouseEvent e)  {
+    static void eventOutput(String eventDescription, MouseEvent e)  {
     	Calendar calendar = Calendar.getInstance();
     	long timeMilSec = new Date().getTime();
     	calendar.setTimeInMillis(timeMilSec);long lastSec = 0;
@@ -163,7 +204,7 @@ public class TrackMouse extends JPanel implements MouseMotionListener {
     	
     	
     
-    void toCSV(String eventDescription, MouseEvent e) throws Exception {
+    static void toCSV(String eventDescription, MouseEvent e) throws Exception {
     	Calendar calendar = Calendar.getInstance();
     	Timestamp currentTimestamp = new java.sql.Timestamp(calendar.getTime().getTime());
     	String csvFile = "C:\\Users\\Lenovo\\Desktop\\eclipse\\CSV\\output.csv";
@@ -201,12 +242,28 @@ public class TrackMouse extends JPanel implements MouseMotionListener {
 
      
     public void mouseMoved(MouseEvent e) {
-			try {
-				toCSV("Mouse moved to ", e);
-			} catch (Exception e1) {
-				e1.printStackTrace();
-			}
+		/*
+		 * try { toCSV("Mouse moved to ", e); } catch (Exception e1) {
+		 * e1.printStackTrace(); }
+		 */
+		/*
+		 * Calendar calendar = Calendar.getInstance(); long timeMilSec = new
+		 * Date().getTime(); calendar.setTimeInMillis(timeMilSec); long seconds =
+		 * timeMilSec/1000; System.out.println("Hi"); if (!start) { start = !start;
+		 * startX = e.getX(); startY = e.getY(); starttime = new
+		 * java.sql.Timestamp(calendar.getTime().getTime());; } else { double endX =
+		 * e.getX(); double endY = e.getY(); double distance =
+		 * Math.pow(Math.pow((endX-startX),2)+Math.pow((endY-startY),2),0.5); if
+		 * (distance>10) { Timestamp endtime = new
+		 * java.sql.Timestamp(calendar.getTime().getTime()); long actualtime =
+		 * endtime.getTime() - starttime.getTime(); double speed = distance/actualtime;
+		 * System.out.println("SX " + startX + NEWLINE + "SY " + startY + NEWLINE +
+		 * "EX " + endX + NEWLINE + "EY " + endY + NEWLINE + "Distance " + distance +
+		 * NEWLINE + "Actualtime " + actualtime + NEWLINE + "Speed " + speed); //Call
+		 * Python Script starttime = endtime; startX = endX; startY = endY; } }
+		 */
 			eventOutput("Mouse moved to ", e);
+			
     }
 			
 				
