@@ -10,10 +10,12 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Point2D;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.StringWriter;
 import java.sql.Timestamp;
 import java.util.Calendar;
@@ -57,6 +59,7 @@ public class TrackMouse extends JPanel implements MouseMotionListener {
     public static void main(String[] args) throws Exception {
     	
     	
+		
         TileFactoryInfo info = new OSMTileFactoryInfo();
         DefaultTileFactory tileFactory = new DefaultTileFactory(info);
         jXMapKit.setTileFactory(tileFactory);
@@ -71,7 +74,12 @@ public class TrackMouse extends JPanel implements MouseMotionListener {
 
         jXMapKit.setZoom(14);
         jXMapKit.setAddressLocation(eu);
-        
+        ProcessBuilder pb = new ProcessBuilder("python", "module1.py");
+		pb.directory(new File("C:\\Users\\Lenovo\\Documents\\Visual Studio 2017\\Backup Files\\ispeed-Project-master")); 
+		Process p = pb.start();
+		BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream())); 
+		BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+		OutputStream outStream=p.getOutputStream();
         jXMapKit.getMainMap().addMouseMotionListener(new MouseMotionListener() {
             @Override
             public void mouseDragged(MouseEvent e) { 
@@ -119,17 +127,25 @@ public class TrackMouse extends JPanel implements MouseMotionListener {
             				long actualtime = endtime.getTime() - starttime.getTime();
             				double speed = distance/actualtime;
 							
-							 //Call Python Script 
+							//Call Python Script 
             				try { 
-            					String command = "cmd.exe /c start python C:\\Users\\Lenovo\\Documents\\Visual Studio 2017\\Backup Files\\ispeed-Project-master\\module1.py"; 
-            					Process p = Runtime.getRuntime().exec(command);
-            					BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream())); 
-            					BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream())); // Read the output from the command 
-            					System.out.println("Here is the standard output of the command:");
+								/*
+								 * String command =
+								 * "cmd.exe /c start python C:\\Users\\Lenovo\\Documents\\Visual Studio 2017\\Backup Files\\ispeed-Project-master\\module1.py"
+								 * ; Process p = Runtime.getRuntime().exec(command);
+								 */
+            					outStream.write("Testing".getBytes());
+            					// Read the output from the command 
             					String s = null;
-            					while ((s = stdInput.readLine()) != null) { System.out.println(s);} // Read any errors from the attempted command System.out.println("Here is the standard error of the command (if any):\n"); 
-            					while ((s = stdError.readLine()) != null) { System.out.println(s);}
-            					String ret = stdInput.readLine(); System.out.println("value is : "+ret);
+            					while ((s = stdInput.readLine()) != null) {
+            						System.out.println("Here is the standard output of the command:");
+            						System.out.println(s);} 
+            					// Read any errors from the attempted command 
+            					while ((s = stdError.readLine()) != null) { 
+            						System.out.println("Here is the standard error of the command (if any):"); 
+            						System.out.println(s);}
+            					//String ret = s; 
+            					//System.out.println("Value is : "+s);
             					//Process p = Runtime.getRuntime().exec("python C:\\Users\\Lenovo\\Documents\\Visual Studio 2017\\Backup Files\\ispeed-Project-master"); 
             					} 
             				catch (IOException e1) {
@@ -145,13 +161,7 @@ public class TrackMouse extends JPanel implements MouseMotionListener {
             		}
             		
                 JXMapViewer map = jXMapKit.getMainMap();
-                
-                try {
-    				toCSV("Mouse moved to ", e);
-    			} catch (Exception e1) {
-    				e1.printStackTrace();
-    			}
-    			eventOutput("Mouse moved to ", e);
+    			//eventOutput("Mouse moved to ", e);
                 // convert to world bitmap
                 Point2D worldPos = map.getTileFactory().geoToPixel(eu, map.getZoom());
 
@@ -204,12 +214,13 @@ public class TrackMouse extends JPanel implements MouseMotionListener {
      
     private static void createAndShowGUI() {
         JFrame frame = new JFrame("Europe Map");
+        frame.setSize(1000,700);
         //frame.setLayout(new GridLayout(2, 0));
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        JComponent newContentPane = new TrackMouse();
-        newContentPane.setOpaque(false); 
-        frame.add(newContentPane);
-        frame.pack();
+        //JComponent newContentPane = new TrackMouse();
+        //newContentPane.setOpaque(false); 
+        //frame.add(newContentPane);
+        frame.add(jXMapKit);
         frame.setVisible(true);
     }
      
@@ -233,96 +244,42 @@ public class TrackMouse extends JPanel implements MouseMotionListener {
         setPreferredSize(new Dimension(1000, 700));
         setBorder(BorderFactory.createEmptyBorder(0,10,0,10));
     }
-    
-     
-    static void eventOutput(String eventDescription, MouseEvent e)  {
-    	Calendar calendar = Calendar.getInstance();
-    	long timeMilSec = new Date().getTime();
-    	calendar.setTimeInMillis(timeMilSec);long lastSec = 0;
-    	Timestamp currentTimestamp = new java.sql.Timestamp(calendar.getTime().getTime());
-    	float distance = ( ( e.getX()*e.getX()) + (e.getY()*e.getY()) ) /2;
-    	float actualspeed = distance/timeMilSec;
-        textArea.append(eventDescription
-                + "(" + e.getX() + "," + e.getY() + ")"
-                + " detected on "
-                + currentTimestamp + "  " + timeMilSec + "  " + distance + "  " + actualspeed
-                + NEWLINE);
-        textArea.setCaretPosition(textArea.getDocument().getLength());
-    }
-    	
-    	
-    
-    static void toCSV(String eventDescription, MouseEvent e) throws Exception {
-    	Calendar calendar = Calendar.getInstance();
-    	Timestamp currentTimestamp = new java.sql.Timestamp(calendar.getTime().getTime());
-    	String csvFile = "C:\\Users\\Lenovo\\Desktop\\eclipse\\CSV\\output.csv";
-        FileWriter writer = new FileWriter(csvFile,true);
-        writer.append( "[" + "(" + e.getX() + ")" + "(" +e.getY() +")" + "]" + "," + currentTimestamp + '\n');
-		
-        
-        
-        /*
-		 * writer.append(eventDescription + "," + "[" + "(" + e.getX() + ")" + "(" +
-		 * e.getY() +")" + "]" + "," + " detected on " + "," + currentTimestamp + "," +
-		 * /n);
-		 */
-		/*
-		 * List<String[]> datalines = new ArrayList<>(); datalines.add(new String[]
-		 * {"Mouse moved to "," [" + "(" + e.getX() + ")" + "(" + e.getY() +")" + "]",
-		 * " detected on ", "" + currentTimestamp + "" } );
-		 * 
-		 * for (String[] t : datalines) { List<String> list = new ArrayList<>();
-		 * list.add("Mouse moved to "); list.add(" [" + "(" + e.getX() + ")" + "(" +
-		 * e.getY() +")" + "]"); list.add(" detected on "); list.add("" +
-		 * currentTimestamp + "" );
-		 */
-        
-		/*
-		 * writer.append(eventDescription + "(" + e.getX() + "," + e.getY() + ")" +
-		 * " detected on " //+ e.getComponent().getClass().getName() + currentTimestamp
-		 * + NEWLINE);
-		 */
-   
-        writer.flush();
-        writer.close();
-    }
-    
 
+	@Override
+	public void mouseDragged(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseMoved(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+    
      
-    public void mouseMoved(MouseEvent e) {
-		/*
-		 * try { toCSV("Mouse moved to ", e); } catch (Exception e1) {
-		 * e1.printStackTrace(); }
-		 */
-		/*
-		 * Calendar calendar = Calendar.getInstance(); long timeMilSec = new
-		 * Date().getTime(); calendar.setTimeInMillis(timeMilSec); long seconds =
-		 * timeMilSec/1000; System.out.println("Hi"); if (!start) { start = !start;
-		 * startX = e.getX(); startY = e.getY(); starttime = new
-		 * java.sql.Timestamp(calendar.getTime().getTime());; } else { double endX =
-		 * e.getX(); double endY = e.getY(); double distance =
-		 * Math.pow(Math.pow((endX-startX),2)+Math.pow((endY-startY),2),0.5); if
-		 * (distance>10) { Timestamp endtime = new
-		 * java.sql.Timestamp(calendar.getTime().getTime()); long actualtime =
-		 * endtime.getTime() - starttime.getTime(); double speed = distance/actualtime;
-		 * System.out.println("SX " + startX + NEWLINE + "SY " + startY + NEWLINE +
-		 * "EX " + endX + NEWLINE + "EY " + endY + NEWLINE + "Distance " + distance +
-		 * NEWLINE + "Actualtime " + actualtime + NEWLINE + "Speed " + speed); //Call
-		 * Python Script starttime = endtime; startX = endX; startY = endY; } }
-		 */
+	/*
+	 * static void eventOutput(String eventDescription, MouseEvent e) { Calendar
+	 * calendar = Calendar.getInstance(); long timeMilSec = new Date().getTime();
+	 * calendar.setTimeInMillis(timeMilSec);long lastSec = 0; Timestamp
+	 * currentTimestamp = new java.sql.Timestamp(calendar.getTime().getTime());
+	 * float distance = ( ( e.getX()*e.getX()) + (e.getY()*e.getY()) ) /2; float
+	 * actualspeed = distance/timeMilSec; textArea.append(eventDescription + "(" +
+	 * e.getX() + "," + e.getY() + ")" + " detected on " + currentTimestamp + "  " +
+	 * timeMilSec + "  " + distance + "  " + actualspeed + NEWLINE);
+	 * textArea.setCaretPosition(textArea.getDocument().getLength()); }
+	 */
+    	 
+    /*public void mouseMoved(MouseEvent e) {
+		
 			eventOutput("Mouse moved to ", e);
 			
     }
-			
-				
-			
-			
-    
      
     public void mouseDragged(MouseEvent e) {
 			eventOutput("Mouse dragged to ", e);
-	
-    }
+	}
+    */
 }
 /*
  * System.out.println("SX " + startX + NEWLINE + "SY " + startY + NEWLINE +
