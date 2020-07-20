@@ -50,6 +50,7 @@ public class TrackMouse extends JPanel implements MouseMotionListener {
 	static double startY;
 	static Timestamp starttime;
 	static boolean start;
+	static int zoomlevel = 13;
 	final static JXMapKit jXMapKit = new JXMapKit();
 
 	static final String NEWLINE = System.getProperty("line.separator");
@@ -67,16 +68,13 @@ public class TrackMouse extends JPanel implements MouseMotionListener {
 		tooltip.setTipText("Center of Europe");
 		tooltip.setComponent(jXMapKit.getMainMap());
 		jXMapKit.getMainMap().add(tooltip);
-
-		jXMapKit.setZoom(14);
+		jXMapKit.setZoom(zoomlevel);
 		jXMapKit.setAddressLocation(eu);
-		ProcessBuilder pb = new ProcessBuilder("python", "module1.py");
-		pb.directory(new File("C:\\Users\\Lenovo\\Documents\\Visual Studio 2017\\Backup Files\\ispeed-Project-master"));
-		Process p = pb.start();
-		BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
-		BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-		OutputStream outStream = p.getOutputStream();
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outStream));
+
+		/*
+		 * OutputStream outStream = p.getOutputStream(); BufferedWriter writer = new
+		 * BufferedWriter(new OutputStreamWriter(outStream));
+		 */
 		jXMapKit.getMainMap().addMouseMotionListener(new MouseMotionListener() {
 			@Override
 			public void mouseDragged(MouseEvent e) {
@@ -121,7 +119,9 @@ public class TrackMouse extends JPanel implements MouseMotionListener {
 					if (distance > 10) {
 						Timestamp endtime = new java.sql.Timestamp(calendar.getTime().getTime());
 						long actualtime = endtime.getTime() - starttime.getTime();
-						double speed = distance / actualtime;
+						
+						double speed = (distance / actualtime)*1000;
+						speed = speed*2.2;
 
 						// Call Python Script
 						try {
@@ -130,23 +130,78 @@ public class TrackMouse extends JPanel implements MouseMotionListener {
 							 * "cmd.exe /c start python C:\\Users\\Lenovo\\Documents\\Visual Studio 2017\\Backup Files\\ispeed-Project-master\\module1.py"
 							 * ; Process p = Runtime.getRuntime().exec(command);
 							 */
-							writer.write("Testing");
-							writer.flush();
+
 							
+							  System.out.println("SX " + startX + NEWLINE + "SY " + startY + NEWLINE +
+							  "EX " + endX + NEWLINE + "EY " + endY + NEWLINE + "Distance " + distance +
+							  NEWLINE + "Actualtime " + actualtime + NEWLINE + "Speed " + speed);
+							  System.out.println(Direction);
+							
+							ProcessBuilder pb = new ProcessBuilder("python", "module1.py", 490 + "", actualtime + "",
+									1 + "", 1 + "", distance + "", speed + "");
+							pb.directory(new File(
+									"C:\\Users\\Lenovo\\Documents\\Visual Studio 2017\\Backup Files\\ispeed-Project-master\\"));
+							Process p = pb.start();
+							BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+							BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
 
 							// Read the output from the command
 							String s = null;
 							while ((s = stdInput.readLine()) != null) {
+							
 								System.out.println("Here is the standard output of the command:");
 								System.out.println(s);
+								char sp = s.charAt(1);
+								int a = Integer.parseInt(sp+"");
+		
+								switch(a) {
+								  case 0:
+										
+									    //jXMapKit.setZoom(9);
+								    break;
+								  case 1:
+										
+										if (Direction == "Up") {
+											zoomlevel = zoomlevel+1;
+										}
+										if (Direction == "Right") {
+											zoomlevel = zoomlevel+1;
+										}
+										if (Direction == "Down") {
+											zoomlevel = zoomlevel-1;
+										}
+										if (Direction == "Left") {
+											zoomlevel = zoomlevel-1;
+										}
+										
+									    jXMapKit.setZoom(zoomlevel);
+								    break;
+								  case 3:
+										
+										if (Direction == "Up") {
+											zoomlevel = zoomlevel+2;
+										}
+										if (Direction == "Right") {
+											zoomlevel = zoomlevel+2;
+										}
+										if (Direction == "Down") {
+											zoomlevel = zoomlevel-2;
+										}
+										if (Direction == "Left") {
+											zoomlevel = zoomlevel-2;
+										}
+										
+										jXMapKit.setZoom(zoomlevel);
+									break;
+								  
+								}
 							}
 							// Read any errors from the attempted command
 							while ((s = stdError.readLine()) != null) {
 								System.out.println("Here is the standard error of the command (if any):");
 								System.out.println(s);
 							}
-							// String ret = s;
-							// System.out.println("Value is : "+s);
+							
 							// Process p = Runtime.getRuntime().exec("python
 							// C:\\Users\\Lenovo\\Documents\\Visual Studio 2017\\Backup
 							// Files\\ispeed-Project-master");
@@ -157,6 +212,8 @@ public class TrackMouse extends JPanel implements MouseMotionListener {
 						starttime = endtime;
 						startX = endX;
 						startY = endY;
+						
+	
 
 					}
 
